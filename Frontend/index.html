@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mastermind Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="container">
+        <h1>Mastermind</h1>
+
+        <p id="status">Try to guess the 4-digit code (digits 0–7).</p>
+
+        <section class="guess-panel">
+            <div class="inputs">
+                <select class="slot" id="slot0"></select>
+                <select class="slot" id="slot1"></select>
+                <select class="slot" id="slot2"></select>
+                <select class="slot" id="slot3"></select>
+            </div>
+            <button id="submitGuess">Submit Guess</button>
+            <button id="newGame" class="secondary">New Game</button>
+        </section>
+
+        <section class="history">
+            <h2>Guess History</h2>
+            <div id="historyList"></div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
