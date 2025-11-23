@@ -1,139 +1,197 @@
-// ----- GAME STATE -----
-let secretCode = [];
+const ROWS = 10;
 const CODE_LENGTH = 4;
-const DIGIT_MAX = 7; // digits 0–7
+const COLORS = 6; // 0–5
+
+let secretCode = [];
+let currentRow = 0; // 0 = first row at bottom
+let selectedColor = null;
 let gameOver = false;
 
-// ----- INITIAL SETUP -----
 document.addEventListener("DOMContentLoaded", () => {
-    // Populate dropdowns with 0–7
-    for (let i = 0; i < CODE_LENGTH; i++) {
-        const select = document.getElementById(`slot${i}`);
-        for (let d = 0; d <= DIGIT_MAX; d++) {
-            const option = document.createElement("option");
-            option.value = d;
-            option.textContent = d;
-            select.appendChild(option);
-        }
-    }
-
-    document.getElementById("submitGuess").addEventListener("click", handleGuess);
-    document.getElementById("newGame").addEventListener("click", startNewGame);
-
-    startNewGame();
+  createBoard();
+  setupPalette();
+  document.getElementById("newGame").addEventListener("click", startNewGame);
+  document.getElementById("submitGuess").addEventListener("click", handleCheck);
+  startNewGame();
 });
 
-// ----- START / RESET GAME -----
-function startNewGame() {
-    secretCode = generateSecretCode();
-    gameOver = false;
+function createBoard() {
+  const board = document.getElementById("board");
+  board.innerHTML = "";
 
-    // Reset status + history
-    const status = document.getElementById("status");
-    status.textContent = "New game started. Make a guess!";
-    status.style.color = "#e5e7eb";
-
-    document.getElementById("historyList").innerHTML = "";
-
-    // Reset inputs to 0
-    for (let i = 0; i < CODE_LENGTH; i++) {
-        document.getElementById(`slot${i}`).value = "0";
-    }
-
-    // Enable guess button
-    document.getElementById("submitGuess").disabled = false;
-
-    // For debugging, you can temporarily log the secret:
-    // console.log("Secret code:", secretCode.join(""));
-}
-
-function generateSecretCode() {
-    const code = [];
-    for (let i = 0; i < CODE_LENGTH; i++) {
-        const digit = Math.floor(Math.random() * (DIGIT_MAX + 1));
-        code.push(digit);
-    }
-    return code;
-}
-
-// ----- HANDLE GUESS -----
-function handleGuess() {
-    if (gameOver) return;
-
-    const guess = [];
-    for (let i = 0; i < CODE_LENGTH; i++) {
-        const value = parseInt(document.getElementById(`slot${i}`).value, 10);
-        guess.push(value);
-    }
-
-    const { black, white } = evaluateGuess(guess, secretCode);
-
-    addHistoryRow(guess, black, white);
-
-    const status = document.getElementById("status");
-
-    if (black === CODE_LENGTH) {
-        status.textContent = `You cracked the code! ✅ Secret was ${secretCode.join("")}`;
-        status.style.color = "#22c55e";
-        gameOver = true;
-        document.getElementById("submitGuess").disabled = true;
-    } else {
-        status.textContent = `Black: ${black}, White: ${white}. Keep trying!`;
-        status.style.color = "#e5e7eb";
-    }
-}
-
-// ----- EVALUATE GUESS (BLACK + WHITE PEGS) -----
-function evaluateGuess(guess, code) {
-    // Copy arrays so we don't mutate originals
-    const codeCopy = [...code];
-    const guessCopy = [...guess];
-
-    let black = 0;
-    let white = 0;
-
-    // 1) Count black pegs (correct digit + correct position)
-    for (let i = 0; i < CODE_LENGTH; i++) {
-        if (guessCopy[i] === codeCopy[i]) {
-            black++;
-            // Mark these as matched
-            guessCopy[i] = null;
-            codeCopy[i] = null;
-        }
-    }
-
-    // 2) Count white pegs (correct digit, wrong position)
-    for (let i = 0; i < CODE_LENGTH; i++) {
-        if (guessCopy[i] === null) continue; // skip already matched
-
-        const indexInCode = codeCopy.indexOf(guessCopy[i]);
-        if (indexInCode !== -1) {
-            white++;
-            // Remove that matched digit so it can't be reused
-            codeCopy[indexInCode] = null;
-            guessCopy[i] = null;
-        }
-    }
-
-    return { black, white };
-}
-
-// ----- UPDATE HISTORY UI -----
-function addHistoryRow(guess, black, white) {
-    const historyList = document.getElementById("historyList");
-
+  for (let r = 0; r < ROWS; r++) {
     const row = document.createElement("div");
-    row.className = "history-row";
+    row.className = "row";
+    row.dataset.rowIndex = r;
 
-    const guessSpan = document.createElement("span");
-    guessSpan.className = "guess";
-    guessSpan.textContent = guess.join(" ");
+    const guessSlots = document.createElement("div");
+    guessSlots.className = "guess-slots";
 
-    const resultSpan = document.createElement("span");
-    resultSpan.textContent = `B: ${black}  W: ${white}`;
+    for (let c = 0; c < CODE_LENGTH; c++) {
+      const slot = document.createElement("div");
+      slot.className = "slot";
+      slot.dataset.colIndex = c;
+      slot.dataset.rowIndex = r;
+      slot.addEventListener("click", () => handleSlotClick(r, c));
+      guessSlots.appendChild(slot);
+    }
 
-    row.appendChild(guessSpan);
-    row.appendChild(resultSpan);
+    const feedback = document.createElement("div");
+    feedback.className = "feedback";
+    for (let i = 0; i < CODE_LENGTH; i++) {
+      const peg = document.createElement("div");
+      peg.className = "peg";
+      feedback.appendChild(peg);
+    }
 
-    historyList.prepend(row); // latest guess on top
+    row.appendChild(guessSlots);
+    row.appendChild(feedback);
+    board.appendChild(row);
+  }
+}
+
+function setupPalette() {
+  const palette = document.getElementById("palette");
+  palette.querySelectorAll(".color").forEach(btn => {
+    btn.addEventListener("click", () => {
+      selectedColor = parseInt(btn.dataset.color, 10);
+      setStatus(`Selected color ${selectedColor + 1}. Click a slot in the active row.`);
+    });
+  });
+}
+
+function startNewGame() {
+  secretCode = [];
+  for (let i = 0; i < CODE_LENGTH; i++) {
+    secretCode.push(Math.floor(Math.random() * COLORS));
+  }
+  // console.log("Secret:", secretCode); // for debugging
+
+  currentRow = 0;
+  gameOver = false;
+  selectedColor = null;
+
+  // Clear board
+  document.querySelectorAll(".slot").forEach(slot => {
+    slot.style.background = "#020617";
+    slot.dataset.color = "";
+  });
+  document.querySelectorAll(".peg").forEach(peg => {
+    peg.style.background = "#020617";
+  });
+
+  highlightActiveRow();
+  setStatus("New game started. Choose a color and fill the bottom row.");
+}
+
+function highlightActiveRow() {
+  document.querySelectorAll(".row").forEach(row => {
+    row.classList.remove("active");
+  });
+  const rows = Array.from(document.querySelectorAll(".row"));
+  const activeRowElement = rows.find(r => parseInt(r.dataset.rowIndex, 10) === currentRow);
+  if (activeRowElement) {
+    activeRowElement.classList.add("active");
+  }
+}
+
+function handleSlotClick(rowIndex, colIndex) {
+  if (gameOver) return;
+  if (rowIndex !== currentRow) {
+    setStatus("You can only fill the current row.");
+    return;
+  }
+  if (selectedColor === null) {
+    setStatus("Select a color from the palette first.");
+    return;
+  }
+
+  const selector = `.slot[data-row-index="${rowIndex}"][data-col-index="${colIndex}"]`;
+  const slot = document.querySelector(selector);
+  slot.dataset.color = selectedColor;
+
+  // Match palette color
+  const paletteBtn = document.querySelector(`.color[data-color="${selectedColor}"]`);
+  slot.style.background = getComputedStyle(paletteBtn).backgroundColor;
+}
+
+function handleCheck() {
+  if (gameOver) return;
+
+  const rowSlots = document.querySelectorAll(`.slot[data-row-index="${currentRow}"]`);
+  const guess = [];
+  for (const slot of rowSlots) {
+    if (slot.dataset.color === "" || slot.dataset.color === undefined) {
+      setStatus("Fill all 4 slots before checking.");
+      return;
+    }
+    guess.push(parseInt(slot.dataset.color, 10));
+  }
+
+  const { black, white } = evaluateGuess(guess, secretCode);
+  updateFeedbackPegs(currentRow, black, white);
+
+  if (black === CODE_LENGTH) {
+    setStatus("You cracked the code! 🎉");
+    gameOver = true;
+    return;
+  }
+
+  currentRow++;
+  if (currentRow >= ROWS) {
+    setStatus(`No more rows! You lost. Secret was ${secretCode.join(", ")}.`);
+    gameOver = true;
+    return;
+  }
+
+  highlightActiveRow();
+  setStatus(`Black: ${black}, White: ${white}. Go to the next row.`);
+}
+
+function evaluateGuess(guess, code) {
+  const codeCopy = [...code];
+  const guessCopy = [...guess];
+  let black = 0;
+  let white = 0;
+
+  // Black pegs
+  for (let i = 0; i < CODE_LENGTH; i++) {
+    if (guessCopy[i] === codeCopy[i]) {
+      black++;
+      guessCopy[i] = null;
+      codeCopy[i] = null;
+    }
+  }
+
+  // White pegs
+  for (let i = 0; i < CODE_LENGTH; i++) {
+    if (guessCopy[i] === null) continue;
+    const idx = codeCopy.indexOf(guessCopy[i]);
+    if (idx !== -1) {
+      white++;
+      codeCopy[idx] = null;
+      guessCopy[i] = null;
+    }
+  }
+
+  return { black, white };
+}
+
+function updateFeedbackPegs(rowIndex, black, white) {
+  const row = document.querySelector(`.row[data-row-index="${rowIndex}"]`);
+  const pegs = row.querySelectorAll(".peg");
+
+  let i = 0;
+  // Fill black pegs first
+  for (; i < black; i++) {
+    pegs[i].style.background = "#000000";
+  }
+  // Then white pegs
+  for (let j = 0; j < white; j++, i++) {
+    pegs[i].style.background = "#ffffff";
+  }
+}
+
+function setStatus(msg) {
+  document.getElementById("status").textContent = msg;
 }

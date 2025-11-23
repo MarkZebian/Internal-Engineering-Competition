@@ -1,33 +1,39 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Mastermind Game</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Mastermind / Codebreaker</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <main class="container">
-        <h1>Mastermind</h1>
+  <main class="game">
+    <header class="top-bar">
+      <h1>Codebreaker</h1>
+      <button id="newGame">New Game</button>
+    </header>
 
-        <p id="status">Try to guess the 4-digit code (digits 0–7).</p>
+    <section id="board" class="board">
+      <!-- 10 rows, each: 4 guess slots + 4 feedback pegs -->
+      <!-- We’ll generate these in JS or you can hard-code. JS version is cleaner. -->
+    </section>
 
-        <section class="guess-panel">
-            <div class="inputs">
-                <select class="slot" id="slot0"></select>
-                <select class="slot" id="slot1"></select>
-                <select class="slot" id="slot2"></select>
-                <select class="slot" id="slot3"></select>
-            </div>
-            <button id="submitGuess">Submit Guess</button>
-            <button id="newGame" class="secondary">New Game</button>
-        </section>
+    <section class="palette-section">
+      <h2>Pick a color</h2>
+      <div id="palette" class="palette">
+        <!-- Color buttons (we'll style them as circles) -->
+        <button class="color" data-color="0"></button>
+        <button class="color" data-color="1"></button>
+        <button class="color" data-color="2"></button>
+        <button class="color" data-color="3"></button>
+        <button class="color" data-color="4"></button>
+        <button class="color" data-color="5"></button>
+      </div>
+      <button id="submitGuess" class="check-btn">Check Guess</button>
+    </section>
 
-        <section class="history">
-            <h2>Guess History</h2>
-            <div id="historyList"></div>
-        </section>
-    </main>
+    <p id="status" class="status">Click a color, then click on a slot in the active row.</p>
+  </main>
 
-    <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
