@@ -1,2 +1,2 @@
 # Internal-Engineering-Competition
-Competing in a internal university comptetition in the programming section
+Competing in an internal university competition in the programming section
