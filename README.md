@@ -1,5 +1,5 @@
 # Internal-Engineering-Competition
-Competing in a internal university comptetition in the programming section
+Competing in an internal university competition in the programming section
 
 This repository contains our full submission for the **Internal Engineering Competition (IEC)** in the **Programming Category**.  
 Our project implements a complete digital version of the classic **Mastermind** game using both:
@@ -71,7 +71,7 @@ Our `evaluateGuess()` logic follows the IEC-required two-step process:
 
 1. **Black Peg Pass**  
    - Matches all digits in the correct position  
-   - Marks those digits as “used”
+   - Marks those digits as “used.”
 
 2. **White Peg Pass**  
    - Checks remaining unmatched digits  
